@@ -1,10 +1,19 @@
+import math
 import mediapipe as mp
 import cv2
+import util
+import numpy as np
 
 video = cv2.VideoCapture(0)
 mp_pose = mp.solutions.pose
 mp_drawing = mp.solutions.drawing_utils
 pose = mp_pose.Pose(static_image_mode = False)
+
+needs_calibration = True
+calibration_frames = 0
+max_calibration_frames = 100
+avg_nose_chest_dist = 0
+cali_nose_chest_lengths = []
 
 while video.isOpened():
   ret, frame = video.read()
@@ -38,8 +47,15 @@ while video.isOpened():
       int((l_shoulder_y + r_shoulder_y) // 2)
     )
 
-   # calculate_angle(l_shoulder, r_shoulder, (r_shoulder_x, 0))
-
+    if needs_calibration:
+      calibration_frames += 1
+      cv2.putText(frame, f"Calibrating: {calibration_frames}/{max_calibration_frames}", (int(w // 2), 10), 
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 1, cv2.LINE_AA)      
+      cali_nose_chest_lengths.append(math.dist(nose, chest)) 
+      if calibration_frames == max_calibration_frames:
+        avg_nose_chest_dist = np.mean(np.array(cali_nose_chest_lengths).flatten())
+        needs_calibration = False
+        print(f"!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!{avg_nose_chest_dist}, {np.round(avg_nose_chest_dist, 2)}")
 
     cv2.circle(frame, nose, 7, 7, -1)
     cv2.circle(frame, l_shoulder, 7, 7, -1)
