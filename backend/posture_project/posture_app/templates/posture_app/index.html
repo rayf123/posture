@@ -1,0 +1,49 @@
+<!-- webrtc_app/templates/webrtc_app/index.html -->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>WebSocket Echo Test</title>
+</head>
+<body>
+    <h1>WebSocket Echo Test</h1>
+    <input type="text" id="messageInput" placeholder="Enter message..." />
+    <button id="sendButton">Send</button>
+    <ul id="messages"></ul>
+
+    <script>
+        const messageInput = document.getElementById('messageInput');
+        const sendButton = document.getElementById('sendButton');
+        const messagesList = document.getElementById('messages');
+
+        const socket = new WebSocket('ws://' + window.location.host + '/ws/echo/');
+
+        socket.onopen = function(e) {
+            console.log("WebSocket connection opened");
+        };
+
+        socket.onmessage = function(e) {
+            const messageItem = document.createElement('li');
+            messageItem.textContent = 'Received: ' + e.data;
+            messagesList.appendChild(messageItem);
+        };
+
+        socket.onclose = function(e) {
+            console.log("WebSocket connection closed");
+        };
+        socket.onse
+
+        sendButton.onclick = function() {
+            const message = messageInput.value;
+            socket.send(message);
+
+            const messageItem = document.createElement('li');
+            messageItem.textContent = 'Sent: ' + message;
+            messagesList.appendChild(messageItem);
+
+            messageInput.value = '';
+        };
+    </script>
+</body>
+</html>
