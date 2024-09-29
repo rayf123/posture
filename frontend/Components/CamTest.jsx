@@ -1,13 +1,14 @@
-// src/App.js
 import React, { useEffect, useRef } from 'react';
 
 function App() {
   const localVideoRef = useRef(null);
+  const remoteVideoRef = useRef(null);
+
   const pcRef = useRef(null);
   const socketRef = useRef(null);
 
   useEffect(() => {
-    const socket = new WebSocket('ws://localhost:8000/ws/webrtc/'); // 127.0.0.1
+    const socket = new WebSocket('ws://127.0.0.1:8000/ws/webrtc/'); // 127.0.0.1
     socketRef.current = socket;
 
     const pc = new RTCPeerConnection({
@@ -56,15 +57,19 @@ function App() {
     };
 
     pc.ontrack = (event) => {
-      console.log('Received remote track:', event.streams);
-
-      // If you want to display the remote video, you can add a video element
-      // and set its srcObject to event.streams[0]
+      if (remoteVideoRef.current) {  // Check if the ref is attached
+          if (remoteVideoRef.current.srcObject !== event.streams[0]) {
+              remoteVideoRef.current.srcObject = event.streams[0];  // Attach remote stream
+              console.log("Received remote video stream");
+          }
+      } else {
+          console.error("Remote video element is not available");
+      }
     };
 
     async function getMedia() {
       try {
-        const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+        const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
         localVideoRef.current.srcObject = stream;
 
         stream.getTracks().forEach((track) => {
@@ -97,24 +102,26 @@ function App() {
     }
 
     getMedia();
-
-    return () => {
-      pc.close();
-      socket.close();
-    };
+    
   }, []);
 
-  return (
-    <div style={{ textAlign: 'center', padding: '20px' }}>
-      <h1>WebRTC Client</h1>
-      <video
-        ref={localVideoRef}
-        autoPlay
-        playsInline
-        muted
-        style={{ width: '600px', border: '1px solid black' }}
-      />
-    </div>
+    return (
+      <div>
+          <h1>WebRTC Test</h1>
+          <video
+              ref={localVideoRef}
+              autoPlay
+              playsInline
+              muted
+              style={{ width: "300px", border: "1px solid black" }}
+          />
+          <video
+              ref={remoteVideoRef}
+              autoPlay
+              playsInline
+              style={{ width: "300px", border: "1px solid black" }}
+          />
+      </div>
   );
 }
 
