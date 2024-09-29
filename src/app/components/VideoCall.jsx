@@ -11,7 +11,7 @@ const VideoCall = () => {
     const peerConnection = useRef(null)
   
     useEffect(() => {
-      const newSocket = io('http://localhost:8000')
+      const newSocket = new WebSocket('ws://localhost:8000/ws')
       setSocket(newSocket)
   
       return () => newSocket.close()
@@ -19,8 +19,14 @@ const VideoCall = () => {
   
     useEffect(() => {
       if (socket) {
-        socket.on('offer', handleOffer)
-        socket.on('ice-candidate', handleIceCandidate)
+        socket.onmessage = (event) => {
+          const message = JSON.parse(event.data)
+          if (message.type === 'answer') {
+            handleAnswer(message)
+          } else if (message.type === 'ice-candidate') {
+            handleIceCandidate(message.candidate)
+          }
+        }
       }
     }, [socket])
   
@@ -36,20 +42,23 @@ const VideoCall = () => {
   
       peerConnection.current.onicecandidate = event => {
         if (event.candidate) {
-          socket.emit('ice-candidate', event.candidate)
+          socket.send(JSON.stringify({
+            type: 'ice-candidate',
+            candidate: event.candidate
+          }))
         }
       }
   
       const offer = await peerConnection.current.createOffer()
       await peerConnection.current.setLocalDescription(offer)
-      socket.emit('offer', offer)
+      socket.send(JSON.stringify({
+        type: 'offer',
+        sdp: offer.sdp
+      }))
     }
   
-    const handleOffer = async (offer) => {
-      peerConnection.current.setRemoteDescription(new RTCSessionDescription(offer))
-      const answer = await peerConnection.current.createAnswer()
-      await peerConnection.current.setLocalDescription(answer)
-      socket.emit('answer', answer)
+    const handleAnswer = (answer) => {
+      peerConnection.current.setRemoteDescription(new RTCSessionDescription(answer))
     }
   
     const handleIceCandidate = (candidate) => {
@@ -59,7 +68,7 @@ const VideoCall = () => {
     return (
       <div>
         <video ref={videoRef} autoPlay playsInline />
-        <button onClick={startCall}>Start Call</button>
+        <button onClick={startCall} className='p-1 border rounded-lg '>Start Call</button>
       </div>
     )
   }
