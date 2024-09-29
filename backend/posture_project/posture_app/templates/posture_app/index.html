@@ -1,0 +1,94 @@
+<!-- templates/viewer.html -->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>WebRTC Viewer</title>
+  <style>
+    body {
+      text-align: center;
+      padding: 20px;
+    }
+    video {
+      width: 600px;
+      border: 1px solid black;
+    }
+  </style>
+</head>
+<body>
+  <h1>WebRTC Viewer</h1>
+  <video id="remoteVideo" autoplay playsinline></video>
+
+  <script>
+    const video = document.getElementById('remoteVideo');
+    const pc = new RTCPeerConnection({
+      iceServers: [{ urls: 'stun:stun.l.google.com:19302' }],
+    });
+
+    const socket = new WebSocket('ws://' + window.location.host + '/ws/viewer/');
+
+    socket.onopen = () => {
+      console.log('Viewer WebSocket connection established');
+      createOffer();
+    };
+
+    socket.onmessage = async (event) => {
+      const message = JSON.parse(event.data);
+      console.log('Viewer Received message:', message);
+
+      if (message.type === 'answer') {
+        const remoteDesc = new RTCSessionDescription({
+          type: message.type,
+          sdp: message.sdp,
+        });
+        await pc.setRemoteDescription(remoteDesc);
+        console.log('Viewer: Remote description set with answer');
+      } else if (message.type === 'candidate') {
+        const candidate = new RTCIceCandidate(message.candidate);
+        await pc.addIceCandidate(candidate);
+        console.log('Viewer: ICE candidate added:', candidate);
+      }
+    };
+
+    socket.onclose = () => {
+      console.log('Viewer WebSocket connection closed');
+    };
+
+    pc.onicecandidate = (event) => {
+      if (event.candidate) {
+        console.log('Viewer: Sending ICE candidate:', event.candidate);
+        socket.send(
+          JSON.stringify({
+            type: 'candidate',
+            candidate: event.candidate,
+          })
+        );
+      }
+    };
+
+    pc.ontrack = (event) => {
+      console.log('Viewer: Received remote track:', event.streams);
+      video.srcObject = event.streams[0];
+    };
+
+    async function createOffer() {
+      try {
+        const offer = await pc.createOffer();
+        await pc.setLocalDescription(offer);
+
+        socket.send(
+          JSON.stringify({
+            type: 'offer',
+            sdp: offer.sdp,
+          })
+        );
+
+        console.log('Viewer: Offer sent:', offer);
+      } catch (error) {
+        console.error('Viewer: Error creating offer:', error);
+      }
+    }
+  </script>
+</body>
+</html>

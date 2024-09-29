@@ -1,10 +1,8 @@
 import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
+
 import './App.css'
-import { initializeApp } from "firebase/app";
-import { getFirestore } from "firebase/firestore";
-import MainPage from '../../Components/Mainpage';
+
+import CamTest from '../../Components/CamTest';
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 
 
@@ -14,7 +12,7 @@ function App() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={<MainPage />}/>
+        <Route path="/" element={<CamTest />}/>
 
 
         
