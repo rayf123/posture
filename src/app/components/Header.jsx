@@ -1,12 +1,13 @@
 import React from 'react'
 import Image from 'next/image'
+import Link from 'next/link'
 const Header = () => {
   return (
     <div className='bg-black text-white font-bold'>
-        <div  className='flex flex-row items-center '>
+        <Link href="/"className='flex flex-row items-center hover:underline  '>
             <Image src="/woodendummy.png" width={40} height={40} alt='Logo' />
             <p>PERFECT POSTURE</p>
-        </div>
+        </Link>
         <div className='bg-white h-[1px]'></div>
     </div>
   )
