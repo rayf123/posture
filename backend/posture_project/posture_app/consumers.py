@@ -5,6 +5,7 @@ from channels.generic.websocket import AsyncWebsocketConsumer
 
 from aiortc import RTCPeerConnection, RTCSessionDescription, RTCIceCandidate
 import logging
+import VideoTransformer
 
 logger = logging.getLogger(__name__)
 
@@ -23,7 +24,8 @@ class WebRTCConsumer(AsyncWebsocketConsumer):
         @self.pc.on("track")
         def on_track(track):
             print(f"Received track: {track.kind}")
-            self.pc.addTrack(track)
+            new_frame = VideoTransformer(track).recv()
+            self.pc.addTrack(new_frame)
 
     async def disconnect(self, close_code):
         print(f"WebSocket disconnected with code: {close_code}")
