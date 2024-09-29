@@ -4,11 +4,6 @@
 venv
 venv/
 ./venv
-**/venv/
-backend/venv/
-
-backend/venv
-backend/venv/
 # dependencies
 /node_modules
 /.pnp
